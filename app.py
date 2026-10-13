@@ -1,5 +1,5 @@
 """
-Smart Healthcare Analytics and Patient Readmission Prediction System
+Healthcare Readmission Analytics & Risk Triaging System
 Full-Stack Streamlit Application (Production-Grade Healthcare Product UI)
 
 Modules:
@@ -31,79 +31,86 @@ from services.review_service import ReviewService
 # 1. Streamlit Application & Page Configuration
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SLAM Healthcare | Readmission Analytics & Review",
+    page_title="Healthcare Readmission Analytics",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # -----------------------------------------------------------------------------
-# 2. Cohesive Clinical Design System & CSS
+# 2. Professional White-Based Design System & Accessible CSS
 # -----------------------------------------------------------------------------
 st.markdown("""
 <style>
-    /* Global Typography & Viewport */
+    /* Global Typography & White Canvas */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
-    html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    html, body, [class*="css"], .stApp {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #ffffff !important;
+        color: #0f172a;
     }
     
     .main .block-container {
         padding-top: 1.8rem;
-        padding-bottom: 3.0rem;
-        padding-left: 2.5rem;
-        padding-right: 2.5rem;
+        padding-bottom: 3.2rem;
+        padding-left: 2.2rem;
+        padding-right: 2.2rem;
         max-width: 1400px;
     }
 
-    /* Headings */
+    /* Professional Headings & Hierarchy */
     .product-title {
         font-size: 1.85rem;
         font-weight: 700;
         color: #0f172a;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.025em;
         margin-bottom: 0.25rem;
         line-height: 1.25;
     }
     .product-subtitle {
         font-size: 0.95rem;
         color: #475569;
-        margin-bottom: 1.35rem;
+        margin-bottom: 1.4rem;
         line-height: 1.45;
     }
     .section-header {
         font-size: 1.15rem;
         font-weight: 600;
-        color: #1e293b;
+        color: #0f172a;
         margin-top: 1.2rem;
-        margin-bottom: 0.6rem;
+        margin-bottom: 0.65rem;
     }
 
     /* Sidebar Brand & Identity */
+    section[data-testid="stSidebar"] {
+        background-color: #fafbfc !important;
+        border-right: 1px solid #e2e8f0;
+    }
     .sidebar-brand-box {
         padding: 0.6rem 0.2rem 1.0rem 0.2rem;
         border-bottom: 1px solid #e2e8f0;
-        margin-bottom: 1.0rem;
+        margin-bottom: 1.1rem;
     }
     .brand-title {
-        font-size: 1.28rem;
+        font-size: 1.25rem;
         font-weight: 700;
         color: #0f172a;
         display: flex;
         align-items: center;
         gap: 0.45rem;
+        letter-spacing: -0.015em;
     }
     .brand-subtitle {
-        font-size: 0.80rem;
-        font-weight: 500;
-        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #475569;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        margin-top: 0.15rem;
+        margin-top: 0.2rem;
     }
 
-    /* Sidebar Badges & Notes */
+    /* Sidebar Status Indicator */
     .sidebar-pill-synthetic {
         background-color: #fef3c7;
         color: #92400e;
@@ -113,47 +120,36 @@ st.markdown("""
         font-size: 0.76rem;
         font-weight: 600;
         display: inline-block;
-        margin-top: 0.8rem;
-        margin-bottom: 0.4rem;
-    }
-    .sidebar-pill-real {
-        background-color: #dcfce7;
-        color: #166534;
-        border: 1px solid #bbf7d0;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.76rem;
-        font-weight: 600;
-        display: inline-block;
-        margin-top: 0.8rem;
+        margin-top: 0.9rem;
         margin-bottom: 0.4rem;
     }
     .sidebar-caption {
         font-size: 0.75rem;
-        color: #64748b;
+        color: #475569;
         line-height: 1.35;
         margin-bottom: 1.0rem;
     }
 
-    /* Metric Cards */
+    /* Metric Cards - Accessible, High Contrast */
     div[data-testid="stMetric"] {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        padding: 14px 18px !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
     }
-    div[data-testid="stMetric"] label {
+    div[data-testid="stMetric"] label, div[data-testid="stMetric"] [data-testid="stMetricLabel"] p {
         font-size: 0.80rem !important;
         font-weight: 600 !important;
-        color: #64748b !important;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
+        color: #475569 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.035em !important;
     }
     div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-        font-size: 1.55rem !important;
+        font-size: 1.65rem !important;
         font-weight: 700 !important;
         color: #0f172a !important;
+        letter-spacing: -0.02em !important;
     }
 
     /* Clinical Cards & Callouts */
@@ -162,7 +158,7 @@ st.markdown("""
         border: 1px solid #e2e8f0;
         border-radius: 8px;
         padding: 16px 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
         margin-bottom: 1rem;
     }
     .guardrail-callout {
@@ -173,34 +169,34 @@ st.markdown("""
         color: #0369a1;
         font-size: 0.86rem;
         margin: 0.8rem 0 1.2rem 0;
-        line-height: 1.4;
+        line-height: 1.45;
     }
     .disclaimer-banner {
-        background-color: #fffbeb;
-        border-left: 4px solid #f59e0b;
-        padding: 10px 14px;
-        border-radius: 0 6px 6px 0;
-        font-size: 0.82rem;
-        color: #92400e;
-        margin-top: 2.2rem;
-        line-height: 1.4;
+        background-color: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        padding: 14px 16px;
+        font-size: 0.80rem;
+        color: #475569;
+        margin-top: 2.5rem;
+        line-height: 1.45;
+        border-radius: 6px;
     }
 
-    /* Custom Radio Navigation Styling */
+    /* Streamlit Radio Navigation Styling */
     div[data-testid="stRadio"] > div {
         gap: 0.35rem;
     }
     div[data-testid="stRadio"] label {
-        padding: 6px 12px;
-        border-radius: 6px;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
         transition: all 0.15s ease-in-out;
         font-size: 0.90rem !important;
-        font-weight: 500;
-        color: #334155;
+        font-weight: 500 !important;
+        color: #1e293b !important;
     }
     div[data-testid="stRadio"] label:hover {
-        background-color: #f1f5f9;
-        color: #0f172a;
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
     }
 
     /* Tab Styling */
@@ -211,19 +207,19 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] {
         font-size: 0.90rem;
         font-weight: 600;
-        color: #64748b;
+        color: #475569;
         padding: 8px 16px;
         border-radius: 6px 6px 0 0;
     }
     .stTabs [aria-selected="true"] {
-        color: #1e40af !important;
-        border-bottom: 2px solid #1e40af !important;
+        color: #0284c7 !important;
+        border-bottom: 2px solid #0284c7 !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 3. Data Ingestion & SQLite Review Queue Initialization
+# 3. Data Ingestion & Precomputed Model Probabilities
 # -----------------------------------------------------------------------------
 @st.cache_data
 def get_cohort_data():
@@ -232,14 +228,34 @@ def get_cohort_data():
 
 df_cohort, provenance = get_cohort_data()
 
-# Ensure SQLite Review Store is initialized and populated with cohort records
+@st.cache_data
+def get_scored_cohort(df_in: pd.DataFrame):
+    """
+    Computes model readmission probabilities across the entire cohort.
+    Enables dynamic, exact filtering and score thresholding across all views.
+    """
+    try:
+        pipeline = PredictionService.get_pipeline()
+        feature_cols = config.NUMERIC_FEATURES + config.CATEGORICAL_FEATURES
+        scores = pipeline.predict_proba(df_in[feature_cols])[:, 1]
+        df_out = df_in.copy()
+        df_out["model_score"] = np.round(scores, 4)
+        return df_out
+    except Exception:
+        df_out = df_in.copy()
+        df_out["model_score"] = 0.50
+        return df_out
+
+df_scored_cohort = get_scored_cohort(df_cohort)
+
+# Initialize and sync SQLite Review Store
 try:
     ReviewService.init_database()
-    ReviewService.sync_cohort_from_dataset(df_cohort, max_records=250)
+    ReviewService.sync_cohort_from_dataset(df_cohort, max_records=500)
 except Exception:
     pass
 
-# Pre-load saved evaluation metrics if available
+# Pre-load saved evaluation metrics
 metrics_saved = None
 if config.METRICS_PATH.exists():
     try:
@@ -249,12 +265,12 @@ if config.METRICS_PATH.exists():
         metrics_saved = None
 
 # -----------------------------------------------------------------------------
-# 4. Streamlined Sidebar & Product Navigation
+# 4. Professional Sidebar & Navigation
 # -----------------------------------------------------------------------------
 st.sidebar.markdown("""
 <div class="sidebar-brand-box">
-    <div class="brand-title">🏥 SLAM Healthcare</div>
-    <div class="brand-subtitle">Readmission Analytics & Review</div>
+    <div class="brand-title">🏥 Healthcare Analytics</div>
+    <div class="brand-subtitle">Readmission Surveillance & Review</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -269,11 +285,10 @@ NAV_PAGES = [
 if "nav_page" not in st.session_state:
     st.session_state["nav_page"] = NAV_PAGES[0]
 
-# Ensure valid page index
 current_nav_index = NAV_PAGES.index(st.session_state["nav_page"]) if st.session_state["nav_page"] in NAV_PAGES else 0
 
 selected_page = st.sidebar.radio(
-    "Navigation",
+    "Product Navigation",
     NAV_PAGES,
     index=current_nav_index,
     label_visibility="collapsed",
@@ -283,19 +298,19 @@ st.session_state["nav_page"] = selected_page
 
 st.sidebar.markdown("---")
 
-# Compact Dataset Provenance Indicator
+# Truthful, Compact Dataset Status Indicator
 if provenance.get("is_synthetic", False):
     st.sidebar.markdown(
         '<div class="sidebar-pill-synthetic">⚡ DEMO COHORT · SYNTHETIC</div>',
         unsafe_allow_html=True
     )
     st.sidebar.markdown(
-        '<div class="sidebar-caption">Statistically modeled after UCI 130-US Hospitals. Contains no Protected Health Information (PHI). Software demonstration only.</div>',
+        '<div class="sidebar-caption">Statistically modeled after UCI 130-US Hospitals (1999–2008). Contains zero Protected Health Information (PHI). Software demonstration only.</div>',
         unsafe_allow_html=True
     )
 else:
     st.sidebar.markdown(
-        '<div class="sidebar-pill-real">✅ CLINICAL DATASET · ACTIVE</div>',
+        '<div class="sidebar-pill-synthetic">✅ CLINICAL DATASET · ACTIVE</div>',
         unsafe_allow_html=True
     )
     st.sidebar.markdown(
@@ -303,52 +318,32 @@ else:
         unsafe_allow_html=True
     )
 
-# Clean, Unobtrusive Academic & Project Context Expander
-with st.sidebar.expander("ℹ️ System & Academic Context", expanded=False):
-    project_title = config.PROJECT_META.get("title", "Smart Healthcare Analytics")
-    institution = config.PROJECT_META.get("institution", "IARE, Hyderabad")
-    guide = config.PROJECT_META.get("guide", "Ms. Y Sujana")
-    students = config.PROJECT_META.get("students", [])
-    version_str = config.PROJECT_META.get("version", "2.0.0 (Review-2)")
-
-    st.markdown(f"**Project:** {project_title}")
-    st.markdown(f"**Institution:** {institution}")
-    st.markdown(f"**Guide:** {guide}")
-    if students:
-        st.markdown("**Investigators:**")
-        for s in students:
-            st.markdown(f"- {s.get('name', 'Student')} (`{s.get('roll_no', '')}`)")
-    st.markdown(f"**Version:** `{version_str}`")
-    st.markdown("**Mapped SDGs:**")
-    st.markdown("- 🩺 **SDG 3:** Good Health and Well-Being (Target 3.8)")
-    st.markdown("- 💡 **SDG 9:** Industry & Innovation (Target 9.5)")
-
 
 # =============================================================================
 # PAGE 1: HOSPITAL OVERVIEW (Landing Dashboard)
 # =============================================================================
 if selected_page == "Hospital Overview":
     st.markdown('<div class="product-title">Hospital Readmission Surveillance & Overview</div>', unsafe_allow_html=True)
-    st.markdown('<div class="product-subtitle">High-level encounter surveillance, population readmission distributions, and clinical triaging indicators.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="product-subtitle">Population health monitoring, encounter surveillance, and data-driven triaging metrics.</div>', unsafe_allow_html=True)
 
     # Interactive Cohort Filter Controls
     with st.expander("🔍 Interactive Population Filters", expanded=True):
         f_col1, f_col2, f_col3, f_col4 = st.columns(4)
         with f_col1:
-            diag_opts = ["All Diagnoses"] + sorted(list(df_cohort["primary_diagnosis"].dropna().unique()))
+            diag_opts = ["All Diagnoses"] + sorted(list(df_scored_cohort["primary_diagnosis"].dropna().unique()))
             sel_diag = st.selectbox("Primary Diagnosis", diag_opts, index=0)
         with f_col2:
-            age_opts = ["All Age Groups"] + sorted(list(df_cohort["age_group"].dropna().unique()))
+            age_opts = ["All Age Groups"] + sorted(list(df_scored_cohort["age_group"].dropna().unique()))
             sel_age = st.selectbox("Age Bracket", age_opts, index=0)
         with f_col3:
-            adm_opts = ["All Admissions"] + sorted(list(df_cohort["admission_type"].dropna().unique()))
+            adm_opts = ["All Admissions"] + sorted(list(df_scored_cohort["admission_type"].dropna().unique()))
             sel_adm = st.selectbox("Admission Urgency", adm_opts, index=0)
         with f_col4:
             readm_opts = ["All Encounters", "Readmitted (<30d)", "No Readmission"]
-            sel_readm = st.selectbox("Readmission Label", readm_opts, index=0)
+            sel_readm = st.selectbox("Readmission Outcome", readm_opts, index=0)
 
-    # Apply Filters to Cohort
-    filtered_df = df_cohort.copy()
+    # Apply Filters to the Cohort
+    filtered_df = df_scored_cohort.copy()
     if sel_diag != "All Diagnoses":
         filtered_df = filtered_df[filtered_df["primary_diagnosis"] == sel_diag]
     if sel_age != "All Age Groups":
@@ -360,42 +355,42 @@ if selected_page == "Hospital Overview":
     elif sel_readm == "No Readmission":
         filtered_df = filtered_df[filtered_df[config.TARGET_COLUMN] == 0]
 
-    # Compute Statistics for the 4 Dedicated KPI Cards
+    # Calculate Data-Driven KPI Metrics Reconciled to Filtered Cohort
     n_filtered = len(filtered_df)
     n_readmitted = int(filtered_df[config.TARGET_COLUMN].sum()) if n_filtered > 0 else 0
     readmit_rate_pct = (n_readmitted / n_filtered * 100) if n_filtered > 0 else 0.0
 
-    # Review store priority count
-    q_stats = ReviewService.get_queue_statistics(threshold=0.50)
-    queue_priority_count = q_stats.get("above_threshold", 0)
+    # Records meeting the model score threshold (>= 0.50)
+    elevated_risk_count = int((filtered_df["model_score"] >= 0.50).sum()) if n_filtered > 0 else 0
+    elevated_risk_pct = (elevated_risk_count / n_filtered * 100) if n_filtered > 0 else 0.0
 
-    # Model holdout metric
+    # Model holdout test metrics from verified artifacts
     model_auc = metrics_saved.get("roc_auc", 0.6272) if metrics_saved else 0.6272
     model_acc = metrics_saved.get("accuracy", 0.5840) if metrics_saved else 0.5840
 
-    # KPI Cards Row
+    # 4 Consistently Styled KPI Cards
     k1, k2, k3, k4 = st.columns(4)
     with k1:
         st.metric(
             label="Inpatient Encounters",
             value=f"{n_filtered:,}",
-            help=f"Represents {n_filtered / len(df_cohort) * 100:.1f}% of active cohort ({len(df_cohort):,} total)"
+            help=f"Represents {n_filtered / len(df_cohort) * 100:.1f}% of total active cohort ({len(df_cohort):,} total)"
         )
     with k2:
         st.metric(
-            label="Readmission Rate",
+            label="Observed Readmission Rate",
             value=f"{readmit_rate_pct:.1f}%",
             delta=f"{n_readmitted:,} positive labels",
             delta_color="inverse",
-            help="Observed 30-day readmission outcome proportion in filtered cohort"
+            help="Empirical proportion of filtered encounters with 30-day readmission outcome"
         )
     with k3:
         st.metric(
-            label="Priority Triage Queue",
-            value=f"{queue_priority_count:,}",
-            delta="Score ≥ 0.50",
+            label="Model Priority Triaged (≥50%)",
+            value=f"{elevated_risk_count:,}",
+            delta=f"{elevated_risk_pct:.1f}% of filtered cohort",
             delta_color="off",
-            help="Encounters in review database with model risk score at or above 50%"
+            help="Encounters in current filtered selection where fitted pipeline estimates readmission probability ≥ 50%"
         )
     with k4:
         st.metric(
@@ -403,25 +398,25 @@ if selected_page == "Hospital Overview":
             value=f"{model_auc:.4f}",
             delta=f"Accuracy: {model_acc * 100:.1f}%",
             delta_color="normal",
-            help="Discriminative performance measured strictly on 1,000 unseen test encounters"
+            help="Discriminative score evaluated strictly on 1,000 unseen test partition encounters"
         )
 
-    st.caption("ℹ️ *Note: The first two metrics reflect empirical cohort observations; the latter two reflect review queue triage counts and holdout model evaluation.*")
+    st.caption("ℹ️ *Analytical distinction: Cards 1–3 reflect observational metrics on filtered cohort encounters; Card 4 reflects holdout test set model validation.*")
     st.markdown("---")
 
     # Overview Visualizations
-    st.markdown('<div class="section-header">Population Readmission Visualizations</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Population Readmission Distributions</div>', unsafe_allow_html=True)
     c_chart1, c_chart2 = st.columns(2)
     with c_chart1:
         if n_filtered > 0:
             st.pyplot(AnalyticsService.plot_readmission_distribution(filtered_df))
         else:
-            st.info("No records match the current filter selection.")
+            st.info("No encounters match the active filter criteria.")
     with c_chart2:
         if n_filtered > 0:
             st.pyplot(AnalyticsService.plot_readmission_by_diagnosis(filtered_df))
         else:
-            st.info("No records match the current filter selection.")
+            st.info("No encounters match the active filter criteria.")
 
     st.markdown("---")
 
@@ -434,12 +429,12 @@ if selected_page == "Hospital Overview":
         else:
             st.info("No records match filter selection.")
     with c_shortcut:
-        st.markdown('<div class="section-header">Filtered Encounter Sample</div>', unsafe_allow_html=True)
-        st.caption("Preview filtered encounters. Navigate to the Review Queue to inspect individual patient profiles and record clinician notes.")
+        st.markdown('<div class="section-header">Filtered Encounter Records</div>', unsafe_allow_html=True)
+        st.caption("Sample view of current filtered cohort. Use the Review Queue for clinical audit and note logging.")
         
         display_features = [
             "patient_id", "age_group", "gender", "primary_diagnosis",
-            "time_in_hospital", "number_inpatient", "num_medications", config.TARGET_COLUMN
+            "time_in_hospital", "number_inpatient", "model_score", config.TARGET_COLUMN
         ]
         valid_cols = [c for c in display_features if c in filtered_df.columns]
         st.dataframe(filtered_df[valid_cols].head(8), use_container_width=True)
@@ -471,22 +466,33 @@ elif selected_page == "Readmission Analytics":
         st.markdown('<div class="section-header">Interactive Subgroup Stratification</div>', unsafe_allow_html=True)
         st.caption("Select a clinical attribute to evaluate readmission proportions, encounter counts, and sample sizes ($N$) across subgroups.")
 
+        # Enhanced feature options including clinically relevant brackets
+        df_subgroup_source = df_cohort.copy()
+        df_subgroup_source["los_bracket"] = df_subgroup_source["time_in_hospital"].apply(
+            lambda d: "1-3 days" if d <= 3 else ("4-6 days" if d <= 6 else "7+ days")
+        )
+        df_subgroup_source["med_bracket"] = df_subgroup_source["num_medications"].apply(
+            lambda m: "1-10 meds" if m <= 10 else ("11-20 meds" if m <= 20 else "21+ meds")
+        )
+
         feature_map = {
             "Primary ICD Diagnosis": "primary_diagnosis",
             "Age Bracket": "age_group",
             "Admission Urgency": "admission_type",
             "Prior Inpatient Admissions": "number_inpatient",
+            "Length of Stay Bracket": "los_bracket",
+            "Medication Burden Bracket": "med_bracket",
             "Insulin Regimen": "insulin",
             "HbA1c Lab Result": "a1c_result",
             "Admission Referral Route": "admission_source"
         }
-        sel_feat_label = st.selectbox("Stratify Cohort By Attribute", list(feature_map.keys()), index=0)
+        sel_feat_label = st.selectbox("Stratify Cohort By Clinical Attribute", list(feature_map.keys()), index=0)
         sel_attr_col = feature_map[sel_feat_label]
 
         # Calculate subgroup breakdown table
-        cohort_baseline_rate = df_cohort[config.TARGET_COLUMN].mean() * 100
+        cohort_baseline_rate = df_subgroup_source[config.TARGET_COLUMN].mean() * 100
         subgroup_rows = []
-        for cat_val, grp in df_cohort.groupby(sel_attr_col):
+        for cat_val, grp in df_subgroup_source.groupby(sel_attr_col):
             n_sub = len(grp)
             n_readm = int(grp[config.TARGET_COLUMN].sum())
             sub_rate = (n_readm / n_sub * 100) if n_sub > 0 else 0.0
@@ -513,10 +519,10 @@ elif selected_page == "Readmission Analytics":
                 palette="Blues_r",
                 ax=ax
             )
-            ax.axvline(cohort_baseline_rate, color="#dc2626", linestyle="--", linewidth=1.2, label=f"Cohort Avg ({cohort_baseline_rate:.1f}%)")
-            ax.set_title(f"Readmission Rate by {sel_feat_label}", fontsize=11, fontweight="bold", pad=10)
-            ax.set_xlabel("Readmission Rate (%)", fontsize=9)
-            ax.set_ylabel("Subgroup", fontsize=9)
+            ax.axvline(cohort_baseline_rate, color="#dc2626", linestyle="--", linewidth=1.2, label=f"Cohort Baseline ({cohort_baseline_rate:.1f}%)")
+            ax.set_title(f"Readmission Rate by {sel_feat_label}", fontsize=11, fontweight="bold", color="#0f172a", pad=10)
+            ax.set_xlabel("Readmission Rate (%)", fontsize=9.5, color="#1e293b")
+            ax.set_ylabel("Subgroup Category", fontsize=9.5, color="#1e293b")
             ax.legend(loc="lower right", fontsize=8.5)
             plt.tight_layout()
             st.pyplot(fig)
@@ -526,23 +532,30 @@ elif selected_page == "Readmission Analytics":
         st.markdown('<div class="section-header">Multivariate Risk Factor Distributions</div>', unsafe_allow_html=True)
         c_m1, c_m2 = st.columns(2)
         with c_m1:
-            st.markdown("#### Prior Inpatient Encounters vs. Readmission")
-            st.pyplot(AnalyticsService.plot_inpatient_visits_vs_readmission(df_cohort))
-            st.caption("Distribution of prior hospitalizations across readmission outcomes.")
+            st.markdown("#### Readmission Rate by Prior Inpatient Frequency")
+            st.pyplot(AnalyticsService.plot_prior_admissions_vs_rate(df_cohort))
+            st.caption("Empirical rate across prior hospitalization volume showing sample counts ($N$).")
         with c_m2:
             st.markdown("#### Readmission Rate Across Age Brackets")
             st.pyplot(AnalyticsService.plot_age_vs_readmission(df_cohort))
             st.caption("Proportion of readmitted encounters across demographic age brackets.")
 
         st.markdown("---")
-        st.markdown("#### Primary Diagnostic Categories Across Active Cohort")
-        st.pyplot(AnalyticsService.plot_primary_diagnosis_distribution(df_cohort))
+        c_m3, c_m4 = st.columns(2)
+        with c_m3:
+            st.markdown("#### Prior Inpatient Admissions vs. Readmission Count")
+            st.pyplot(AnalyticsService.plot_inpatient_visits_vs_readmission(df_cohort))
+            st.caption("Distribution of prior hospitalizations across readmission outcomes.")
+        with c_m4:
+            st.markdown("#### Primary Diagnostic Volume Distribution")
+            st.pyplot(AnalyticsService.plot_primary_diagnosis_distribution(df_cohort))
+            st.caption("Encounter volume distribution across primary ICD clinical categories.")
 
         st.markdown("### Empirical Cohort Observations")
         st.markdown("""
-        - **Prior Acute Admissions:** Encounters with one or more inpatient admissions in the preceding 12 months exhibit statistically elevated readmission frequency.
-        - **Extended Inpatient Duration:** Hospitalizations extending beyond 6 days correlate with higher readmission proportions, reflecting greater illness complexity.
-        - **Polypharmacy Regimens:** High counts of prescribed medications correlate with readmission risk due to complex multi-drug regimens post-discharge.
+        - **Prior Acute Admissions:** Patients with 2 or more inpatient admissions in the preceding 12 months exhibit substantially elevated readmission incidence compared to first-time admissions.
+        - **Extended Inpatient Duration:** Hospital stays extending beyond 6 days correlate with higher readmission proportions, reflecting greater acute complexity during admission.
+        - **Polypharmacy Regimens:** High counts of prescribed medications correlate with readmission risk due to treatment regimen complexity post-discharge.
         """)
 
 
@@ -854,7 +867,7 @@ elif selected_page == "Patient Risk Review":
                         st.error("Failed to update encounter review in database.")
 
         else:
-            st.info("No records in review queue match the current filter and search criteria.")
+            st.info("No records in review queue match the current filter and search criteria. Adjust filters or search terms.")
 
     with tab_intake:
         st.markdown('<div class="section-header">Real-Time Patient Intake & Risk Scoring</div>', unsafe_allow_html=True)
@@ -977,10 +990,11 @@ elif selected_page == "Patient Risk Review":
 
 
 # -----------------------------------------------------------------------------
-# 5. Global Healthcare Demonstration Disclaimer (Footer)
+# 5. Truthful Software Demonstration Notice (Footer)
 # -----------------------------------------------------------------------------
-st.markdown(f"""
+st.markdown("""
 <div class="disclaimer-banner">
-    <strong>Healthcare Software Demonstration Notice:</strong> {config.PROJECT_META.get('disclaimer', '')}
+    <strong>Healthcare Software Demonstration Notice:</strong> This application is an educational prototype developed for software testing and demonstration.
+    Outputs reflect statistical likelihood computed on a synthetic cohort modeled after the UCI 130-US Hospitals dataset. The system is not certified for clinical diagnostic decisions or medical prescriptions.
 </div>
 """, unsafe_allow_html=True)

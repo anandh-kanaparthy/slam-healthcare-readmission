@@ -198,6 +198,7 @@ class PredictionService:
 
         return {
             "prediction": pred_class,
+            "prediction_class": pred_class,
             "prediction_label": "Readmission Predicted (<30 Days)" if pred_class == 1 else "No Readmission Predicted",
             "readmission_probability": round(prob_readmitted, 4),
             "readmission_percentage": round(prob_readmitted * 100, 1),

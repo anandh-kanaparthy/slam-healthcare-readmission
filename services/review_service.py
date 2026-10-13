@@ -77,7 +77,7 @@ class ReviewService:
             conn.commit()
 
     @classmethod
-    def sync_cohort_from_dataset(cls, df: pd.DataFrame, pipeline=None, max_records: int = 200):
+    def sync_cohort_from_dataset(cls, df: pd.DataFrame, pipeline=None, max_records: int = 500):
         """
         Populates the review database from the cohort dataset if the queue is empty or has new records.
         Uses INSERT OR IGNORE so existing review statuses and notes are NEVER overwritten.

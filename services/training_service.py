@@ -137,18 +137,19 @@ class TrainingService:
     @staticmethod
     def _save_confusion_matrix_plot(cm: list, output_path: Path):
         """Generates and persists confusion matrix visualization."""
-        fig, ax = plt.subplots(figsize=(5, 4))
+        fig, ax = plt.subplots(figsize=(5, 4), facecolor="#ffffff")
+        ax.set_facecolor("#ffffff")
         sns.heatmap(
             cm, annot=True, fmt="d", cmap="Blues", cbar=False,
             xticklabels=["No Readmission", "Readmitted (<30d)"],
             yticklabels=["No Readmission", "Readmitted (<30d)"],
             ax=ax
         )
-        ax.set_title("Test Set Confusion Matrix", fontsize=11, fontweight="bold", pad=10)
-        ax.set_xlabel("Predicted Label", fontsize=10)
-        ax.set_ylabel("True Label", fontsize=10)
+        ax.set_title("Test Set Confusion Matrix", fontsize=11, fontweight="bold", color="#0f172a", pad=10)
+        ax.set_xlabel("Predicted Label", fontsize=10, color="#1e293b")
+        ax.set_ylabel("True Label", fontsize=10, color="#1e293b")
         plt.tight_layout()
-        fig.savefig(output_path, dpi=150)
+        fig.savefig(output_path, dpi=150, facecolor="#ffffff")
         plt.close(fig)
 
     @staticmethod
@@ -172,13 +173,14 @@ class TrainingService:
                     "importance": importances
                 }).sort_values("importance", ascending=False).head(10)
 
-                fig, ax = plt.subplots(figsize=(7, 4.5))
+                fig, ax = plt.subplots(figsize=(7, 4.5), facecolor="#ffffff")
+                ax.set_facecolor("#ffffff")
                 sns.barplot(x="importance", y="feature", data=feat_df, hue="feature", palette="Blues_r", legend=False, ax=ax)
-                ax.set_title("Top 10 Clinical Risk Feature Importances", fontsize=11, fontweight="bold", pad=10)
-                ax.set_xlabel("Relative Importance Score", fontsize=10)
-                ax.set_ylabel("Clinical Feature", fontsize=10)
+                ax.set_title("Top 10 Clinical Risk Feature Importances", fontsize=11, fontweight="bold", color="#0f172a", pad=10)
+                ax.set_xlabel("Relative Importance Score", fontsize=10, color="#1e293b")
+                ax.set_ylabel("Clinical Feature", fontsize=10, color="#1e293b")
                 plt.tight_layout()
-                fig.savefig(output_path, dpi=150)
+                fig.savefig(output_path, dpi=150, facecolor="#ffffff")
                 plt.close(fig)
         except Exception as e:
             print(f"[WARNING] Could not generate feature importance plot: {e}")
@@ -189,17 +191,18 @@ class TrainingService:
         try:
             from sklearn.metrics import roc_curve
             fpr, tpr, _ = roc_curve(y_test, y_prob)
-            fig, ax = plt.subplots(figsize=(5.2, 4.0))
-            ax.plot(fpr, tpr, color="#2b5c8f", lw=2, label=f"Model ROC (AUC = {roc_auc_val:.4f})")
+            fig, ax = plt.subplots(figsize=(5.2, 4.0), facecolor="#ffffff")
+            ax.set_facecolor("#ffffff")
+            ax.plot(fpr, tpr, color="#0284c7", lw=2, label=f"Model ROC (AUC = {roc_auc_val:.4f})")
             ax.plot([0, 1], [0, 1], color="#94a3b8", lw=1.5, linestyle="--", label="Random (AUC = 0.50)")
             ax.set_xlim([0.0, 1.0])
             ax.set_ylim([0.0, 1.05])
-            ax.set_xlabel("False Positive Rate (1 - Specificity)", fontsize=9)
-            ax.set_ylabel("True Positive Rate (Sensitivity / Recall)", fontsize=9)
-            ax.set_title("Receiver Operating Characteristic (ROC)", fontsize=11, fontweight="bold", pad=10)
+            ax.set_xlabel("False Positive Rate (1 - Specificity)", fontsize=9.5, color="#1e293b")
+            ax.set_ylabel("True Positive Rate (Sensitivity / Recall)", fontsize=9.5, color="#1e293b")
+            ax.set_title("Receiver Operating Characteristic (ROC)", fontsize=11, fontweight="bold", color="#0f172a", pad=10)
             ax.legend(loc="lower right", fontsize=8.5)
             plt.tight_layout()
-            fig.savefig(output_path, dpi=150)
+            fig.savefig(output_path, dpi=150, facecolor="#ffffff")
             plt.close(fig)
         except Exception as e:
             print(f"[WARNING] Could not generate ROC curve plot: {e}")
