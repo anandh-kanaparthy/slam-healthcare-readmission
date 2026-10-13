@@ -32,11 +32,13 @@ class TrainingService:
         X_test: pd.DataFrame,
         y_train: pd.Series,
         y_test: pd.Series,
-        model_type: str = "Random Forest"
+        model_type: str = "Random Forest",
+        save_artifacts: bool = True
     ) -> Tuple[Pipeline, Dict[str, Any]]:
         """
         Trains model pipeline strictly on X_train/y_train and evaluates on X_test/y_test.
-        Persists pipeline to models/readmission_pipeline.joblib and metrics to JSON.
+        If save_artifacts is True, persists pipeline to models/readmission_pipeline.joblib,
+        metrics to JSON, and evaluation plots to artifacts/.
         """
         preprocessor = PreprocessingService.create_preprocessor()
 
@@ -87,19 +89,50 @@ class TrainingService:
             "test_readmission_rate": round(float(y_test.mean() * 100), 2),
         }
 
-        # Save artifacts
-        config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
-        config.ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+        # Save artifacts only when requested (prevents test runs from clobbering production models)
+        if save_artifacts:
+            config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
+            config.ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
-        joblib.dump(pipeline, config.MODEL_PATH)
-        with open(config.METRICS_PATH, "w") as f:
-            json.dump(metrics, f, indent=2)
+            joblib.dump(pipeline, config.MODEL_PATH)
+            with open(config.METRICS_PATH, "w") as f:
+                json.dump(metrics, f, indent=2)
 
-        # Save Evaluation Charts
-        TrainingService._save_confusion_matrix_plot(cm, config.CONFUSION_MATRIX_PATH)
-        TrainingService._save_feature_importance_plot(pipeline, config.FEATURE_IMPORTANCE_PATH)
+            # Save Evaluation Charts
+            TrainingService._save_confusion_matrix_plot(cm, config.CONFUSION_MATRIX_PATH)
+            TrainingService._save_feature_importance_plot(pipeline, config.FEATURE_IMPORTANCE_PATH)
+            TrainingService._save_roc_curve_plot(y_test, y_prob, metrics["roc_auc"], config.ROC_CURVE_PATH)
 
         return pipeline, metrics
+
+    @staticmethod
+    def compare_models(
+        X_train: pd.DataFrame,
+        X_test: pd.DataFrame,
+        y_train: pd.Series,
+        y_test: pd.Series
+    ) -> pd.DataFrame:
+        """
+        Trains and compares Random Forest and Logistic Regression on the exact same train/test split.
+        Does not overwrite disk artifacts.
+        Returns a DataFrame summarizing side-by-side performance metrics.
+        """
+        results = []
+        for model_name in ["Random Forest", "Logistic Regression"]:
+            _, m = TrainingService.train_and_evaluate(
+                X_train, X_test, y_train, y_test,
+                model_type=model_name,
+                save_artifacts=False
+            )
+            results.append({
+                "Model Architecture": model_name,
+                "Accuracy": f"{m['accuracy'] * 100:.2f}%",
+                "Precision": f"{m['precision']:.4f}",
+                "Recall (Sensitivity)": f"{m['recall']:.4f}",
+                "F1 Score": f"{m['f1_score']:.4f}",
+                "ROC-AUC": f"{m['roc_auc']:.4f}"
+            })
+        return pd.DataFrame(results)
 
     @staticmethod
     def _save_confusion_matrix_plot(cm: list, output_path: Path):
@@ -149,3 +182,25 @@ class TrainingService:
                 plt.close(fig)
         except Exception as e:
             print(f"[WARNING] Could not generate feature importance plot: {e}")
+
+    @staticmethod
+    def _save_roc_curve_plot(y_test, y_prob, roc_auc_val: float, output_path: Path):
+        """Generates and persists ROC curve visualization."""
+        try:
+            from sklearn.metrics import roc_curve
+            fpr, tpr, _ = roc_curve(y_test, y_prob)
+            fig, ax = plt.subplots(figsize=(5.2, 4.0))
+            ax.plot(fpr, tpr, color="#2b5c8f", lw=2, label=f"Model ROC (AUC = {roc_auc_val:.4f})")
+            ax.plot([0, 1], [0, 1], color="#94a3b8", lw=1.5, linestyle="--", label="Random (AUC = 0.50)")
+            ax.set_xlim([0.0, 1.0])
+            ax.set_ylim([0.0, 1.05])
+            ax.set_xlabel("False Positive Rate (1 - Specificity)", fontsize=9)
+            ax.set_ylabel("True Positive Rate (Sensitivity / Recall)", fontsize=9)
+            ax.set_title("Receiver Operating Characteristic (ROC)", fontsize=11, fontweight="bold", pad=10)
+            ax.legend(loc="lower right", fontsize=8.5)
+            plt.tight_layout()
+            fig.savefig(output_path, dpi=150)
+            plt.close(fig)
+        except Exception as e:
+            print(f"[WARNING] Could not generate ROC curve plot: {e}")
+

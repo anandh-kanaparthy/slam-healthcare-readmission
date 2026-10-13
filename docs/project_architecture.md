@@ -1,21 +1,23 @@
 # System Architecture & Technical Specifications
 
-**Project Title:** Smart Healthcare Analytics and Patient Readmission Prediction System
-**Institution:** Institute of Aeronautical Engineering (IARE)
-**Review Stage:** SLAM Project Review-2
-**Mapped SDGs:** SDG 3 (Good Health and Well-Being), SDG 9 (Industry, Innovation and Infrastructure)
+**Project Title:** Smart Healthcare Analytics and Patient Readmission Prediction System  
+**Institution:** Institute of Aeronautical Engineering (IARE), Hyderabad  
+**Review Stage:** SLAM Project Review-2  
+**Mapped SDGs:** SDG 3 (Good Health and Well-Being), SDG 9 (Industry, Innovation and Infrastructure)  
 
 ---
 
 ## 1. Architectural Overview
 
-The system is structured as a decoupled, modular service-oriented architecture designed for lightweight CPU execution on standard hardware (e.g., Dell Latitude E6420 under Windows 11).
+The application is structured as a decoupled, service-oriented modular architecture designed for lightweight, offline CPU execution on standard hardware (e.g., Dell Latitude E6420 under Windows 11).
 
-```
+```text
 +-----------------------------------------------------------------------------------+
 |                                  USER INTERFACE                                   |
 |                        Streamlit Web Application (app.py)                         |
-|  - Executive Overview   - Patient Predictor   - Analytics   - Model Performance   |
+|  Page 1: Hospital Overview        |  Page 2: Readmission Analytics                |
+|  Page 3: Data Quality & Preproc   |  Page 4: Model Performance                    |
+|  Page 5: Patient Risk Review (Triage Queue & Intake Evaluator)                    |
 +-----------------------------------------------------------------------------------+
                                           |
                                           v
@@ -26,23 +28,26 @@ The system is structured as a decoupled, modular service-oriented architecture d
 |  |    DataService     |   | PreprocessingService  |   |    TrainingService     |  |
 |  | - Schema Validation|   | - Median/Mode Impute  |   | - Pipeline Fitting     |  |
 |  | - Cohort Ingestion |   | - StandardScaler      |   | - Stratified Split     |  |
-|  | - Provenance Stats |   | - OneHotEncoder       |   | - Metrics Calculation  |  |
+|  | - Provenance Stats |   | - OneHotEncoder       |   | - Metrics & Benchmark  |  |
+|  | - Clean & Dedup    |   | - Leakage Prevention  |   | - Confusion & ROC Plots|  |
 |  +--------------------+   +-----------------------+   +------------------------+  |
 |                                                                                   |
-|  +--------------------+   +-----------------------+                               |
-|  | PredictionService  |   |   AnalyticsService    |                               |
-|  | - Range Validation |   | - Class Distributions |                               |
-|  | - Inference Engine |   | - Box/Bar Analytics   |                               |
-|  | - Risk Tiers (L/M/H|   | - Confusion Matrices  |                               |
-|  +--------------------+   +-----------------------+                               |
+|  +--------------------+   +-----------------------+   +------------------------+  |
+|  | PredictionService  |   |   AnalyticsService    |   |     ReviewService      |  |
+|  | - Range Validation |   | - Subgroup Analysis   |   | - SQLite Store & Sync  |  |
+|  | - Inference Engine |   | - Class Distributions |   | - Queue Filtering/Sort |  |
+|  | - Ethical Tiers    |   | - LOS & Inpatient Box |   | - Clinician Note Audit |  |
+|  | - Percentile Bench |   | - Headless Agg Backend|   | - Intake Persistence   |  |
+|  +--------------------+   +-----------------------+   +------------------------+  |
 +-----------------------------------------------------------------------------------+
                                           |
                                           v
 +-----------------------------------------------------------------------------------+
-|                               PERSISTENCE ARTIFACTS                               |
+|                               PERSISTENCE LAYER                                   |
+|  - data/review_store.db (SQLite database: encounter_reviews table & audit trail)  |
 |  - models/readmission_pipeline.joblib (Fitted Scikit-learn Pipeline)              |
 |  - models/evaluation_metrics.json (Accuracy, Precision, Recall, F1, ROC-AUC)      |
-|  - artifacts/confusion_matrix.png & feature_importance.png                        |
+|  - artifacts/confusion_matrix.png, feature_importance.png, roc_curve.png          |
 |  - data/synthetic_demo_cohort.csv / diabetic_data.csv                             |
 +-----------------------------------------------------------------------------------+
 ```
@@ -52,34 +57,42 @@ The system is structured as a decoupled, modular service-oriented architecture d
 ## 2. Core Service Modules
 
 ### 2.1 `services/data_service.py`
-- **Responsibility**: Ingestion, dataset schema validation, missingness profiling, and provenance tracking.
-- **Data Integrity**: Enforces strict verification of all 8 numerical features, 10 categorical features, and the binary target column. Automatically distinguishes real clinical datasets from clearly labeled synthetic demo cohorts.
+- **Responsibility**: Ingestion, schema verification, data quality auditing, duplicate detection, and provenance tracking.
+- **Data Integrity**: Enforces strict verification of all 8 continuous/integer features, 10 categorical features, and the binary target column. Automatically detects and flags whether the active cohort is a synthetic demonstration cohort or a real de-identified cohort.
 
 ### 2.2 `services/preprocessing_service.py`
 - **Responsibility**: Leakage-free feature transformation and stratified train/test partitioning.
 - **Pipeline Structure**:
   - `num`: `SimpleImputer(strategy="median")` $\rightarrow$ `StandardScaler()`
   - `cat`: `SimpleImputer(strategy="most_frequent")` $\rightarrow$ `OneHotEncoder(handle_unknown="ignore", sparse_output=False)`
-- **Data Leakage Safeguard**: Data splitting occurs *prior* to any transformation fitting. The preprocessor is fit solely on the training partition ($80\%$) and applied to the test partition ($20\%$).
+- **Data Leakage Safeguard**: Stratified partitioning occurs *strictly prior* to any transformer fitting. The `ColumnTransformer` is fitted exclusively on the 80% training partition ($N=4,000$) and applied to the 20% test partition ($N=1,000$). Non-predictive identification codes (`patient_id`) are stripped before fitting to prevent artificial memorization.
 
 ### 2.3 `services/training_service.py`
-- **Responsibility**: Model fitting, hyperparameter specification, performance evaluation, and artifact serialization.
+- **Responsibility**: Supervised model training, evaluation metrics calculation, multi-model benchmarking, and artifact serialization.
 - **Classifiers Supported**:
-  - `RandomForestClassifier`: Ensembles 100 decision trees (`max_depth=10`, `class_weight="balanced"`) to handle non-linear clinical interactions.
-  - `LogisticRegression`: High-interpretability baseline with balanced class weighting.
-- **Evaluation Outputs**: Accuracy, Precision, Recall, F1-Score, ROC-AUC, and Confusion Matrix.
+  - `RandomForestClassifier`: 100 estimators, `max_depth=10`, `class_weight="balanced"`. Handles non-linear feature interactions without GPU requirements.
+  - `LogisticRegression`: High-interpretability linear baseline with balanced class weights.
+- **Benchmarking Engine**: `compare_models()` trains and evaluates both architectures on the exact same holdout split to display side-by-side performance tables.
 
 ### 2.4 `services/prediction_service.py`
-- **Responsibility**: Real-time patient inference, input boundary validation, risk stratification, and factor attribution.
-- **Risk Stratification Engine**:
-  - **Low Risk ($< 35\%$)**: Standard discharge plan and routine follow-up.
-  - **Moderate Risk ($35\% - 65\%$)**: Enhanced follow-up, telephone call within 72 hours, medication reconciliation.
-  - **High Risk ($> 65\%$)**: Multidisciplinary transitional intervention and dedicated case management.
-- **Contextual Risk Attributions**: Identifies key patient-specific flags such as prior inpatient hospitalizations ($\ge 2$), extended length of stay ($\ge 7$ days), polypharmacy ($\ge 20$ medications), and emergency admission route.
+- **Responsibility**: Real-time patient inference, clinical input boundary validation, risk tiering, and empirical cohort comparative factors.
+- **Ethical Risk Tiering**:
+  - **Lower Relative Risk (<35%)**: Probability below 35%. Consistent with baseline routine discharge follow-up.
+  - **Moderate Relative Risk (35% – 65%)**: Intermediate risk band. Suggests heightened vigilance.
+  - **Elevated Relative Risk (>65%)**: Top percentile risk band. Flagged for multi-factor clinical review.
+- **Empirical Cohort Benchmarking**: Computes factual descriptive comparisons between patient attributes and the active cohort percentiles (e.g., patient LOS compared against cohort median of 4 days, inpatient visits against cohort 75th percentile).
 
 ### 2.5 `services/analytics_service.py`
-- **Responsibility**: Visual analytics and exploratory cohort distributions.
-- **Backend**: Headless `matplotlib` (`Agg`) and `seaborn` to ensure reliable rendering in Streamlit and testing environments without GUI server dependencies.
+- **Responsibility**: Headless visual analytics and statistical chart generation.
+- **Backend Architecture**: Enforces `matplotlib.use("Agg")` across all modules before importing `pyplot`, preventing GUI display conflicts in headless and web-server environments.
+
+### 2.6 `services/review_service.py` *(New)*
+- **Responsibility**: SQLite-backed human-in-the-loop review queue and clinical audit trail (`data/review_store.db`).
+- **Capabilities**:
+  - Cohort synchronization via `INSERT OR IGNORE` to preserve existing review statuses and clinician notes.
+  - Dynamic parameterized search, status filtering, priority score thresholding, and sorting.
+  - Review decision auditing: Updates review status (`Pending Review`, `Reviewed - Standard`, `Requires Follow-up`, `Escalated to Physician`), records reviewer identity and UTC timestamp.
+  - Interactive intake enrollment: Persists newly scored intake patient profiles directly into the review queue.
 
 ---
 
@@ -87,10 +100,11 @@ The system is structured as a decoupled, modular service-oriented architecture d
 
 | Technology | Role | Justification |
 | :--- | :--- | :--- |
-| **Python 3.14** | Core Language | Robust, cross-platform ecosystem for data science. |
+| **Python 3.14** | Core Language | Standard, robust programming language for modern data science. |
 | **Pandas & NumPy** | Data Manipulation | High-performance vectorized operations on structured clinical tables. |
-| **Scikit-learn** | Machine Learning | CPU-efficient, stable, industry-standard pipelines with zero GPU requirements. |
-| **Streamlit** | Web Interface | Rapid interactive dashboarding directly in Python without separate web servers. |
-| **Matplotlib & Seaborn** | Visualization | Lightweight, customizable clinical charts rendered in headless mode. |
+| **Scikit-learn** | Machine Learning | CPU-efficient, stable, industry-standard ML pipeline with zero GPU requirements. |
+| **SQLite 3** | Local Persistence | Zero-configuration, file-based relational storage for clinical review triage queue. |
+| **Streamlit** | Web Application | Interactive, multi-page product interface rendered directly in Python. |
+| **Matplotlib & Seaborn** | Visualization | Lightweight clinical charts generated in headless mode (`Agg` backend). |
 | **Joblib** | Serialization | Efficient serialization of Scikit-learn pipelines with embedded transformers. |
-| **Pytest** | QA & Automated Testing | Standard automated unit and integration test runner. |
+| **Pytest** | Automated Testing | Comprehensive QA test suite (25 automated unit and integration tests). |

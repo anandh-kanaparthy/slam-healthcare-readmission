@@ -1,5 +1,6 @@
 """
-Unit tests for PredictionService: Validation, inference, and error handling.
+Unit tests for PredictionService: Validation, inference, empirical cohort comparisons,
+and error handling.
 """
 import pytest
 import config
@@ -37,11 +38,21 @@ def test_prediction_output_structure(valid_patient):
     assert "readmission_probability" in result
     assert 0.0 <= result["readmission_probability"] <= 1.0
     assert "risk_tier" in result
-    assert result["risk_tier"] in ["Low Risk", "Moderate Risk", "High Risk"]
+    assert result["risk_tier"] in ["Lower Relative Risk", "Moderate Relative Risk", "Elevated Relative Risk"]
     assert "risk_color" in result
-    assert "recommendation" in result
-    assert isinstance(result["contributing_factors"], list)
-    assert len(result["contributing_factors"]) > 0
+    assert "tier_description" in result
+    assert isinstance(result["comparative_factors"], list)
+    assert len(result["comparative_factors"]) > 0
+    assert "disclaimer" in result
+
+def test_cohort_statistics_calculation():
+    stats = PredictionService.get_cohort_statistics()
+    assert "total_records" in stats
+    assert stats["total_records"] > 0
+    assert "numeric" in stats
+    assert "time_in_hospital" in stats["numeric"]
+    assert "median" in stats["numeric"]["time_in_hospital"]
+    assert "p75" in stats["numeric"]["time_in_hospital"]
 
 def test_missing_feature_validation():
     invalid_patient = {"time_in_hospital": 3}

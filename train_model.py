@@ -68,6 +68,7 @@ def run_training_pipeline(model_type: str = "Random Forest"):
     print(f"  [SAVED] Metrics JSON         : {config.METRICS_PATH}")
     print(f"  [SAVED] Confusion Matrix Plot: {config.CONFUSION_MATRIX_PATH}")
     print(f"  [SAVED] Feature Importance   : {config.FEATURE_IMPORTANCE_PATH}")
+    print(f"  [SAVED] ROC Curve Plot       : {config.ROC_CURVE_PATH}")
     print("=" * 70)
     print("Pipeline training completed successfully!\n")
     return pipeline, metrics

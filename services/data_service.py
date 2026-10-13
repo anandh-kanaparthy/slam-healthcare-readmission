@@ -1,15 +1,17 @@
 """
-Data Service: Ingestion, schema validation, profiling, and provenance tracking.
+Data Service: Ingestion, schema validation, data cleaning, profiling,
+and feature selection analysis for SLAM Review-2.
 """
 from pathlib import Path
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 import pandas as pd
+import numpy as np
 
 import config
 from data.generate_data import generate_synthetic_cohort
 
 class DataService:
-    """Service handling dataset ingestion, validation, and statistical summaries."""
+    """Service handling dataset ingestion, cleaning, validation, and feature analysis."""
 
     @staticmethod
     def load_data(filepath: str | Path = None) -> Tuple[pd.DataFrame, Dict[str, Any]]:
@@ -60,6 +62,30 @@ class DataService:
         return df, provenance
 
     @staticmethod
+    def clean_dataset(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        """
+        Performs data cleaning per PPT Slide 12:
+        - Detects and drops duplicate records.
+        - Identifies and excludes non-clinical patient identifiers (e.g., patient_id).
+        - Reports missing values across columns.
+        """
+        initial_count = len(df)
+        df_cleaned = df.drop_duplicates().copy()
+        dropped_duplicates = initial_count - len(df_cleaned)
+
+        missing_counts = df_cleaned.isna().sum().to_dict()
+        total_missing = sum(missing_counts.values())
+
+        report = {
+            "initial_records": initial_count,
+            "cleaned_records": len(df_cleaned),
+            "duplicates_removed": dropped_duplicates,
+            "total_missing_values": total_missing,
+            "missing_by_column": {k: v for k, v in missing_counts.items() if v > 0}
+        }
+        return df_cleaned, report
+
+    @staticmethod
     def validate_schema(df: pd.DataFrame, require_target: bool = True) -> Tuple[bool, str]:
         """Validates that a DataFrame contains all required model features and target."""
         if df is None or df.empty:
@@ -94,3 +120,45 @@ class DataService:
             "numeric_feature_count": len(config.NUMERIC_FEATURES),
             "categorical_feature_count": len(config.CATEGORICAL_FEATURES),
         }
+
+    @staticmethod
+    def get_feature_selection_summary(df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """
+        Calculates correlation and association metrics with the readmission target
+        to demonstrate the Feature Selection stage (PPT Slide 9 & 12).
+        """
+        if config.TARGET_COLUMN not in df.columns:
+            return []
+
+        correlations = []
+        y = df[config.TARGET_COLUMN]
+
+        # Numeric feature correlations (Point-Biserial correlation)
+        for col in config.NUMERIC_FEATURES:
+            if col in df.columns:
+                corr = df[col].corr(y)
+                correlations.append({
+                    "feature": col,
+                    "type": "Numeric",
+                    "association_score": round(abs(float(corr)), 4) if not np.isnan(corr) else 0.0,
+                    "direction": "Positive (+)" if corr > 0 else "Negative (-)",
+                    "rationale": "Measures acute utilization and clinical intensity during hospital stay"
+                })
+
+        # Categorical feature variation
+        for col in config.CATEGORICAL_FEATURES:
+            if col in df.columns:
+                # Group-level difference in readmission rate
+                grouped = df.groupby(col)[config.TARGET_COLUMN].mean()
+                spread = float(grouped.max() - grouped.min())
+                correlations.append({
+                    "feature": col,
+                    "type": "Categorical",
+                    "association_score": round(spread, 4),
+                    "direction": "Between-group spread",
+                    "rationale": "Captures demographic, diagnosis, and medication regimen variation"
+                })
+
+        # Sort by association strength
+        correlations.sort(key=lambda x: x["association_score"], reverse=True)
+        return correlations

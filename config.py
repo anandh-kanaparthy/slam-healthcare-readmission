@@ -27,6 +27,7 @@ MODEL_PATH = MODELS_DIR / "readmission_pipeline.joblib"
 METRICS_PATH = MODELS_DIR / "evaluation_metrics.json"
 CONFUSION_MATRIX_PATH = ARTIFACTS_DIR / "confusion_matrix.png"
 FEATURE_IMPORTANCE_PATH = ARTIFACTS_DIR / "feature_importance.png"
+ROC_CURVE_PATH = ARTIFACTS_DIR / "roc_curve.png"
 
 # Reproducibility and Validation Split
 RANDOM_STATE = 42
@@ -99,5 +100,6 @@ PROJECT_META = {
         {"name": "K. Anandh", "roll_no": "2125951A0527"}
     ],
     "sdgs": ["SDG 3 (Good Health and Well-being)", "SDG 9 (Industry, Innovation and Infrastructure)"],
+    "version": "2.0.0 (Review-2)",
     "disclaimer": "Academic Prototype Disclaimer: This software is an educational prototype developed for SLAM Project Review-2 at IARE. It is not certified for clinical diagnostic use or real-world patient care decisions."
 }

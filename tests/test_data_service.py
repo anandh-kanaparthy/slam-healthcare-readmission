@@ -1,5 +1,6 @@
 """
-Unit tests for DataService: Ingestion, schema validation, and summary stats.
+Unit tests for DataService: Ingestion, schema validation, data cleaning,
+and feature selection summary stats.
 """
 import pytest
 import pandas as pd
@@ -47,3 +48,22 @@ def test_dataset_summary_metrics():
     assert summary["total_features"] == len(config.NUMERIC_FEATURES) + len(config.CATEGORICAL_FEATURES)
     assert 0.0 <= summary["readmitted_pct"] <= 100.0
     assert summary["missing_values_count"] >= 0
+
+def test_data_cleaning_and_duplicate_removal():
+    df, _ = DataService.load_data()
+    # Create artificial duplicate
+    dup_row = df.iloc[0:1]
+    df_with_dups = pd.concat([df, dup_row], ignore_index=True)
+    cleaned_df, report = DataService.clean_dataset(df_with_dups)
+    assert report["duplicates_removed"] >= 1
+    assert len(cleaned_df) == len(df)
+
+def test_feature_selection_summary_calculation():
+    df, _ = DataService.load_data()
+    feat_summary = DataService.get_feature_selection_summary(df)
+    assert isinstance(feat_summary, list)
+    assert len(feat_summary) > 0
+    top_feature = feat_summary[0]
+    assert "feature" in top_feature
+    assert "association_score" in top_feature
+    assert "direction" in top_feature
