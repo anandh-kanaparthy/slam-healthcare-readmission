@@ -4,8 +4,8 @@
 **Institution:** Institute of Aeronautical Engineering (IARE), Hyderabad  
 **Guide:** Ms. Y Sujana (Assistant Professor, Department of CSE)  
 **Students:**  
-- **A. Akshith** (Roll No: `2125951A05`)  
-- **K. Anandh** (Roll No: `2125951A0527`)  
+- **A. Akshith** (Roll No: `25951A0521`)  
+- **K. Anandh** (Roll No: `25951A0527`)  
 **Project Presentation:** `slam project(2).pptx`  
 **GitHub Repository:** [https://github.com/anandh-kanaparthy/slam-healthcare-readmission](https://github.com/anandh-kanaparthy/slam-healthcare-readmission)  
 **UN SDGs Mapped:** **SDG 3** (Good Health and Well-Being — Target 3.8), **SDG 9** (Industry, Innovation and Infrastructure — Target 9.5)  
